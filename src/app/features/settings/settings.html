@@ -1,0 +1,103 @@
+<section class="page settings-page" aria-labelledby="settings-title">
+  <header class="page-heading">
+    <span class="page-icon material-symbols-rounded" aria-hidden="true">tune</span>
+    <div>
+      <p class="eyebrow">Make it yours</p>
+      <h1 id="settings-title">Settings</h1>
+      <p>Shape Stillora around the way you rest.</p>
+    </div>
+  </header>
+
+  <section class="settings-section" aria-labelledby="appearance-title">
+    <div class="section-heading">
+      <div class="section-icon">
+        <span class="material-symbols-rounded" aria-hidden="true">palette</span>
+      </div>
+      <div>
+        <h2 id="appearance-title">Appearance</h2>
+        <p>Your choice also styles Android's top and bottom system bars.</p>
+      </div>
+    </div>
+
+    <div class="theme-grid" role="group" aria-label="Color theme">
+      @for (theme of themes; track theme.value) {
+        <button
+          type="button"
+          [class.selected]="settings.theme() === theme.value"
+          [attr.aria-pressed]="settings.theme() === theme.value"
+          (click)="setTheme(theme.value)"
+        >
+          <span class="material-symbols-rounded" aria-hidden="true">{{ theme.icon }}</span>
+          <strong>{{ theme.label }}</strong>
+          <small>{{ theme.detail }}</small>
+          @if (settings.theme() === theme.value) {
+            <span class="check material-symbols-rounded" aria-hidden="true">check_circle</span>
+          }
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="settings-section" aria-labelledby="playback-title">
+    <div class="section-heading">
+      <div class="section-icon">
+        <span class="material-symbols-rounded" aria-hidden="true">graphic_eq</span>
+      </div>
+      <div>
+        <h2 id="playback-title">Playback</h2>
+        <p>Choose how your listening sessions flow.</p>
+      </div>
+    </div>
+
+    <div class="setting-row">
+      <div>
+        <span id="fade-label" class="field-label">Sound transition</span>
+        <p>Cross-fade when you choose another atmosphere.</p>
+      </div>
+      <app-select-picker
+        [value]="settings.fadeDuration().toString()"
+        [options]="fadeOptions"
+        sheetTitle="Sound transition"
+        aria-labelledby="fade-label"
+        (valueChange)="setFadeDuration($event)"
+      />
+    </div>
+
+    <div class="setting-row">
+      <div>
+        <span id="timer-label" class="field-label">Default timer</span>
+        <p>The timer selected when a new session begins.</p>
+      </div>
+      <app-select-picker
+        [value]="settings.defaultTimer().toString()"
+        [options]="timerOptions"
+        sheetTitle="Default timer"
+        aria-labelledby="timer-label"
+        (valueChange)="setTimer($event)"
+      />
+    </div>
+
+    <label class="toggle-row">
+      <span class="toggle-copy">
+        <strong>Remember last sound</strong>
+        <small>Open with the atmosphere you used most recently.</small>
+      </span>
+      <input
+        type="checkbox"
+        [checked]="settings.rememberSound()"
+        (change)="setRememberSound($event)"
+      />
+      <span class="toggle-track" aria-hidden="true"><span></span></span>
+    </label>
+  </section>
+
+  <aside class="privacy-note">
+    <span class="material-symbols-rounded" aria-hidden="true">verified_user</span>
+    <div>
+      <strong>Private by design</strong>
+      <p>
+        Your preferences stay on this device. Stillora has no account, analytics, or cloud sync.
+      </p>
+    </div>
+  </aside>
+</section>

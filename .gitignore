@@ -21,6 +21,13 @@ yarn-error.log
 *.launch
 .settings/
 *.sublime-workspace
+/reference
+/android
+/releases
+/release-keystore.jks
+/keystore.b64.txt
+/*-key.pem
+/*-cert.pem
 
 # Visual Studio Code
 .vscode/*

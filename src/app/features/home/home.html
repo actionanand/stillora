@@ -1,0 +1,188 @@
+<section class="home-page" aria-labelledby="sound-title">
+  <app-background-video [path]="video.path()" (unavailable)="video.markUnavailable()" />
+
+  <header class="home-header">
+    <a class="brand" href="/" aria-label="Stillora home">
+      <img ngSrc="stillora.png" width="46" height="46" priority alt="" />
+      <span>
+        <strong>stillora</strong>
+        <small>your quiet place</small>
+      </span>
+    </a>
+    <span class="offline-pill">
+      <span class="material-symbols-rounded" aria-hidden="true">cloud_off</span>
+      Offline
+    </span>
+  </header>
+
+  <div class="session">
+    <p class="eyebrow">Now breathing with</p>
+    <h1 id="sound-title">{{ audio.currentSound().title }}</h1>
+    <p class="description">{{ audio.currentSound().description }}</p>
+
+    <button
+      class="play-button"
+      type="button"
+      [attr.aria-label]="audio.playing() ? 'Pause ambient sound' : 'Play ambient sound'"
+      [disabled]="audio.loading()"
+      (click)="togglePlayback()"
+    >
+      <span class="pulse pulse-one"></span>
+      <span class="pulse pulse-two"></span>
+      <span class="material-symbols-rounded" aria-hidden="true">
+        {{ audio.loading() ? 'progress_activity' : audio.playing() ? 'pause' : 'play_arrow' }}
+      </span>
+    </button>
+
+    <p class="timer-readout" aria-live="polite">
+      <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
+      {{ timer.label() }}
+    </p>
+
+    <div class="quick-actions">
+      <button type="button" (click)="timerSheetOpen.set(true)">
+        <span class="material-symbols-rounded" aria-hidden="true">timer</span>
+        <span>Timer</span>
+      </button>
+      <button type="button" (click)="volumeSheetOpen.set(true)">
+        <span class="material-symbols-rounded" aria-hidden="true">
+          {{ audio.volume() === 0 ? 'volume_off' : 'volume_up' }}
+        </span>
+        <span>Volume</span>
+      </button>
+    </div>
+
+    @if (audio.error()) {
+      <p class="error-message" role="alert">{{ audio.error() }}</p>
+    }
+    @if (!video.available()) {
+      <p class="video-note">The atmosphere is using its calming gradient fallback.</p>
+    }
+  </div>
+
+  <section class="sound-drawer" aria-labelledby="sound-library-title">
+    <div class="drawer-handle" aria-hidden="true"></div>
+    <div class="drawer-heading">
+      <div>
+        <span class="eyebrow">Sound library</span>
+        <h2 id="sound-library-title">Choose an atmosphere</h2>
+      </div>
+      <span>{{ sounds.length }} sounds</span>
+    </div>
+    <div class="sound-list">
+      @for (sound of sounds; track sound.id) {
+        <button
+          type="button"
+          class="sound-card"
+          [class.selected]="sound.id === audio.currentSound().id"
+          [attr.aria-pressed]="sound.id === audio.currentSound().id"
+          (click)="selectSound(sound)"
+        >
+          <span class="sound-icon" [style.--sound-accent]="sound.accent">
+            <span class="material-symbols-rounded" aria-hidden="true">{{ sound.icon }}</span>
+          </span>
+          <span class="sound-copy">
+            <strong>{{ sound.title }}</strong>
+            <small>{{ sound.description }}</small>
+          </span>
+          @if (sound.id === audio.currentSound().id) {
+            <span class="now-playing" aria-hidden="true"> <i></i><i></i><i></i> </span>
+          }
+        </button>
+      }
+    </div>
+  </section>
+</section>
+
+@if (timerSheetOpen()) {
+  <div class="sheet-overlay">
+    <button
+      type="button"
+      class="sheet-backdrop"
+      aria-label="Close timer options"
+      (click)="timerSheetOpen.set(false)"
+    ></button>
+    <section class="control-sheet" role="dialog" aria-modal="true" aria-labelledby="timer-title">
+      <header>
+        <div>
+          <span class="eyebrow">Sleep peacefully</span>
+          <h2 id="timer-title">Set a timer</h2>
+        </div>
+        <button
+          type="button"
+          class="close-button"
+          aria-label="Close timer options"
+          (click)="timerSheetOpen.set(false)"
+        >
+          <span class="material-symbols-rounded" aria-hidden="true">close</span>
+        </button>
+      </header>
+      <div class="timer-grid">
+        @for (duration of timerOptions; track duration) {
+          <button
+            type="button"
+            [class.selected]="duration === timer.duration()"
+            [attr.aria-pressed]="duration === timer.duration()"
+            (click)="selectTimer(duration)"
+          >
+            @if (duration === 'continuous') {
+              <span class="material-symbols-rounded" aria-hidden="true">all_inclusive</span>
+              <strong>Continuous</strong>
+            } @else {
+              <strong>{{ duration }}</strong>
+              <small>minutes</small>
+            }
+          </button>
+        }
+      </div>
+      <p>When time ends, your sound gently fades for 15 seconds before stopping.</p>
+    </section>
+  </div>
+}
+
+@if (volumeSheetOpen()) {
+  <div class="sheet-overlay">
+    <button
+      type="button"
+      class="sheet-backdrop"
+      aria-label="Close volume control"
+      (click)="volumeSheetOpen.set(false)"
+    ></button>
+    <section
+      class="control-sheet volume-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="volume-title"
+    >
+      <header>
+        <div>
+          <span class="eyebrow">Find your balance</span>
+          <h2 id="volume-title">Volume</h2>
+        </div>
+        <button
+          type="button"
+          class="close-button"
+          aria-label="Close volume control"
+          (click)="volumeSheetOpen.set(false)"
+        >
+          <span class="material-symbols-rounded" aria-hidden="true">close</span>
+        </button>
+      </header>
+      <div class="volume-control">
+        <span class="material-symbols-rounded" aria-hidden="true">volume_mute</span>
+        <label class="visually-hidden" for="volume-range">Ambient sound volume</label>
+        <input
+          id="volume-range"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          [value]="audio.volume()"
+          (input)="updateVolume($event)"
+        />
+        <span class="material-symbols-rounded" aria-hidden="true">volume_up</span>
+      </div>
+      <output for="volume-range">{{ audio.volume() * 100 | number: '1.0-0' }}%</output>
+    </section>
+  </div>
+}
