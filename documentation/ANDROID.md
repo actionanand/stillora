@@ -37,6 +37,42 @@ npm run android:open
 If `android/` does not exist, `npx cap sync android` reporting a missing platform is expected. Run
 `npm run android:add` first.
 
+## Notification and lock-screen media controls
+
+Stillora publishes the current atmosphere to Android's media session. This provides play/pause and
+stop actions in the notification shade, Quick Settings media area, lock screen, and supported
+headsets. The notification represents the whole soundscape: the selected atmosphere is the title
+and active mixer layers continue to follow the same controls.
+
+Install the Capacitor 8-compatible plugin from WSL:
+
+```bash
+npm i @capgo/capacitor-media-session@8.0.29 --save-exact
+npx cap sync android
+```
+
+The dependency is already declared in `package.json`; running the first command also updates
+`package-lock.json`. A normal `npm run android:sync` builds Angular, synchronizes the plugin, and
+reapplies Stillora's native patch.
+
+The **Settings > Playback > Notification media controls** switch is enabled by default. It is
+stored by `SettingsStore` in local storage and included in Stillora JSON exports. Turning it off
+removes the active media session without stopping in-app playback.
+
+Android chooses the exact button arrangement for the OS version and device. Test on a physical
+device:
+
+1. Start an atmosphere and open the notification shade and Quick Settings.
+2. Confirm the Stillora title, artwork, atmosphere name, and playing state.
+3. Pause and resume from Android, then confirm the in-app button and background video follow.
+4. Stop from Android and confirm audio, mixer layers, video, and the media notification stop.
+5. Repeat from the lock screen and a headset if available.
+6. Disable the setting while playing and confirm the media controls disappear.
+
+The current player uses bundled HTML audio inside Capacitor's WebView. Device manufacturers can
+apply different background-process limits, so long-running playback with the screen off must be
+tested on every supported Android family.
+
 ## Versioning
 
 ```bash

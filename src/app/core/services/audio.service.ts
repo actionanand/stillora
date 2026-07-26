@@ -1,20 +1,25 @@
 import { DOCUMENT } from '@angular/common';
-import { computed, inject, Injectable, OnDestroy, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { getMixAvailability } from '../data/mix-compatibility';
 import { SOUNDS } from '../data/sounds';
 import { MixLayer, Sound } from '../models/app.models';
 import { SettingsStore } from '../stores/settings.store';
+import { MediaControlsService } from './media-controls.service';
+import { TimerService } from './timer.service';
 
 @Injectable({ providedIn: 'root' })
 export class AudioService implements OnDestroy {
   private readonly document = inject(DOCUMENT);
   private readonly settings = inject(SettingsStore);
+  private readonly mediaControls = inject(MediaControlsService);
+  private readonly timer = inject(TimerService);
   private activeAudio: HTMLAudioElement | null = null;
   private readonly mixAudio = new Map<string, HTMLAudioElement>();
   private readonly disposedAudio = new WeakSet<HTMLAudioElement>();
   private fadingAudio: HTMLAudioElement | null = null;
   private fadeTimer: ReturnType<typeof setInterval> | null = null;
   private noticeTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly mediaSessionActive = signal(false);
 
   readonly currentSound = signal<Sound>(this.initialSound());
   readonly playing = signal(false);
@@ -26,6 +31,20 @@ export class AudioService implements OnDestroy {
 
   constructor() {
     this.restoreMix();
+    this.mediaControls.initialize({
+      play: () => void this.playFromMediaControls(),
+      pause: () => this.pauseFromMediaControls(),
+      stop: () => this.stopFromMediaControls(),
+    });
+    effect(() => {
+      this.mediaControls.sync({
+        enabled: this.settings.mediaControlsEnabled(),
+        active: this.mediaSessionActive(),
+        playing: this.playing(),
+        sound: this.currentSound(),
+        mixCount: this.mixCount(),
+      });
+    });
   }
 
   async toggle(): Promise<void> {
@@ -44,9 +63,11 @@ export class AudioService implements OnDestroy {
     try {
       await this.activeAudio.play();
       await Promise.allSettled([...this.mixAudio.values()].map((layerAudio) => layerAudio.play()));
+      this.mediaSessionActive.set(true);
       this.playing.set(true);
     } catch {
       this.showError('This sound could not be played. Try another atmosphere.');
+      this.mediaSessionActive.set(false);
       this.playing.set(false);
     } finally {
       this.loading.set(false);
@@ -70,6 +91,7 @@ export class AudioService implements OnDestroy {
       layerAudio.pause();
       layerAudio.currentTime = 0;
     }
+    this.mediaSessionActive.set(false);
     this.playing.set(false);
   }
 
@@ -229,6 +251,7 @@ export class AudioService implements OnDestroy {
       }
       audio.volume = this.volume();
       this.applyMixVolumes();
+      this.mediaSessionActive.set(false);
       this.playing.set(false);
     }, 80);
   }
@@ -241,6 +264,7 @@ export class AudioService implements OnDestroy {
     }
     this.mixAudio.clear();
     this.activeAudio = null;
+    this.mediaControls.destroy();
   }
 
   private initialSound(): Sound {
@@ -248,6 +272,21 @@ export class AudioService implements OnDestroy {
     return (
       (this.settings.rememberSound() && SOUNDS.find((sound) => sound.id === savedId)) || SOUNDS[0]
     );
+  }
+
+  private async playFromMediaControls(): Promise<void> {
+    await this.play();
+    if (this.playing()) this.timer.start(() => this.fadeOutAndStop(15));
+  }
+
+  private pauseFromMediaControls(): void {
+    this.pause();
+    this.timer.pause();
+  }
+
+  private stopFromMediaControls(): void {
+    this.stop();
+    this.timer.stop();
   }
 
   private createAudio(sound: Sound, onError?: () => void): HTMLAudioElement {
@@ -264,6 +303,7 @@ export class AudioService implements OnDestroy {
       }
       if (this.currentSound().id === sound.id) {
         this.showError('This sound file is missing or cannot be read.');
+        this.mediaSessionActive.set(false);
         this.playing.set(false);
       }
     });

@@ -54,6 +54,21 @@ Test:
 tints notification small icons for the current system surface. Do not use the full-color launcher
 image as a notification small icon; it can render as a solid square.
 
+## Playback media session
+
+An ordinary Angular button cannot add controls to Android's system media surfaces. Stillora uses
+`@capgo/capacitor-media-session` to publish the selected atmosphere and to receive native play,
+pause, and stop actions. `AudioService` keeps the main audio and mixer layers aligned with the
+native playback state through `MediaControlsService`; the existing video signal follows the same
+playback state.
+
+The session becomes active only after audio starts successfully. Pause keeps a resumable session;
+Stop, a completed fade-out, an audio error, or disabling the setting publishes the `none` state so
+Android can remove the controls. Android controls the final notification and Quick Settings layout.
+
+Run `npx cap sync android` after installing or updating the plugin. Browser-only testing cannot
+verify the Android notification, lock-screen, headset, or background-process behavior.
+
 ## Settings backup files
 
 Stillora backups are small, human-readable JSON files. In the Android build,

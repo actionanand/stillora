@@ -2,6 +2,13 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.7.
 
+Project guides:
+
+- [Android build and media controls](documentation/ANDROID.md)
+- [Android splash, system bars, and media special cases](documentation/ANDROID_SPECIAL_CASES.md)
+- [Audio/video sources, licensing, and conversion](documentation/MEDIA_ASSETS.md)
+- [NgRx Signal Store state and side effects](documentation/NGRX_SIGNALS.md)
+
 ## Development server
 
 To start a local development server, run:

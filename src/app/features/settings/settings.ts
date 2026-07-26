@@ -86,6 +86,10 @@ export class Settings {
     this.settings.updateRememberSound((event.target as HTMLInputElement).checked);
   }
 
+  protected setMediaControlsEnabled(event: Event): void {
+    this.settings.updateMediaControlsEnabled((event.target as HTMLInputElement).checked);
+  }
+
   protected exportBackup(): void {
     try {
       const destination = this.backupFiles.export(this.settings.createBackup());

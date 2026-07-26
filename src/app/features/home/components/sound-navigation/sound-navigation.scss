@@ -17,16 +17,19 @@
 }
 
 .sound-nav {
-  position: relative;
+  position: fixed;
   z-index: 1;
+  top: calc(env(safe-area-inset-top) + 0.65rem);
+  bottom: 0;
+  left: max(0.65rem, env(safe-area-inset-left));
   display: grid;
   width: min(88vw, 21rem);
-  height: 100dvh;
+  height: auto;
   grid-template-rows: auto auto minmax(0, 1fr);
-  padding: max(1rem, env(safe-area-inset-top)) 0.75rem max(1rem, env(safe-area-inset-bottom))
-    max(0.75rem, env(safe-area-inset-left));
+  padding: 1rem 0.75rem max(1rem, env(safe-area-inset-bottom));
   overflow: hidden;
-  border-right: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.35rem 1.35rem 0 0;
   color: var(--text);
   background:
     radial-gradient(circle at 0 0, var(--primary-soft), transparent 18rem), var(--surface);

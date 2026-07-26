@@ -39,6 +39,7 @@ export interface AppSettings {
   readonly theme: ThemePreference;
   readonly fadeDuration: FadeDuration;
   readonly rememberSound: boolean;
+  readonly mediaControlsEnabled: boolean;
   readonly defaultTimer: TimerDuration;
   readonly volume: number;
   readonly lastSoundId: string;
