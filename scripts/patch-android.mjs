@@ -143,8 +143,11 @@ await ensureThemes(nightStylesPath, true);
 
 const source = `package ${appId};
 
+import android.app.Activity;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -160,11 +163,16 @@ import android.widget.ImageView;
 
 import com.getcapacitor.BridgeActivity;
 
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+
 public class MainActivity extends BridgeActivity {
+  private static final int BACKUP_EXPORT_REQUEST = 6401;
   private final Handler mainHandler = new Handler(Looper.getMainLooper());
   private boolean darkMode;
   private View launchOverlay;
   private long launchOverlayShownAt;
+  private String pendingBackupJson = "";
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -179,6 +187,21 @@ public class MainActivity extends BridgeActivity {
     );
     getBridge().getWebView().setBackgroundColor(Color.parseColor("#07140E"));
     applyLaunchBarStyle();
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    if (requestCode != BACKUP_EXPORT_REQUEST) return;
+    String json = pendingBackupJson;
+    pendingBackupJson = "";
+    if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) return;
+    Uri destination = data.getData();
+    try (OutputStream output = getContentResolver().openOutputStream(destination)) {
+      if (output == null) throw new IllegalStateException("The selected file could not be opened.");
+      output.write(json.getBytes(StandardCharsets.UTF_8));
+      output.flush();
+    } catch (Exception ignored) { }
   }
 
   @Override
@@ -205,6 +228,21 @@ public class MainActivity extends BridgeActivity {
     @JavascriptInterface
     public void hideSplash() {
       runOnUiThread(() -> hideLaunchOverlay());
+    }
+
+    @JavascriptInterface
+    public void exportBackupJson(String json, String fileName) {
+      runOnUiThread(() -> {
+        pendingBackupJson = json == null ? "" : json;
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        intent.putExtra(
+          Intent.EXTRA_TITLE,
+          fileName == null || fileName.isEmpty() ? "stillora-backup.json" : fileName
+        );
+        startActivityForResult(intent, BACKUP_EXPORT_REQUEST);
+      });
     }
   }
 

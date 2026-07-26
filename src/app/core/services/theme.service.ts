@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { effect, inject, Injectable, signal } from '@angular/core';
 import { ThemePreference } from '../models/app.models';
-import { SettingsService } from './settings.service';
+import { SettingsStore } from '../stores/settings.store';
 
 interface SystemBarsBridge {
   setDarkMode(enabled: boolean): void;
@@ -15,7 +15,7 @@ interface NativeWindow extends Window {
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly document = inject(DOCUMENT);
-  private readonly settings = inject(SettingsService);
+  private readonly settings = inject(SettingsStore);
   private readonly media = this.document.defaultView?.matchMedia('(prefers-color-scheme: dark)');
   readonly effectiveTheme = signal<'light' | 'dark'>('light');
 

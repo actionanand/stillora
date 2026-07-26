@@ -10,6 +10,29 @@ export interface Sound {
   readonly videoPath: string;
   readonly icon: string;
   readonly accent: string;
+  readonly mixable?: boolean;
+  readonly mixTitle?: string;
+  readonly mixVariant?: string;
+}
+
+export interface MixLayer {
+  readonly soundId: string;
+  readonly volume: number;
+}
+
+export interface SavedMix {
+  readonly id: string;
+  readonly name: string;
+  readonly primarySoundId: string;
+  readonly layers: readonly MixLayer[];
+  readonly createdAt: string;
+}
+
+export interface StilloraBackup {
+  readonly schemaVersion: 1;
+  readonly app: 'Stillora';
+  readonly exportedAt: string;
+  readonly settings: AppSettings;
 }
 
 export interface AppSettings {
@@ -20,4 +43,6 @@ export interface AppSettings {
   readonly volume: number;
   readonly lastSoundId: string;
   readonly lastBackground: string;
+  readonly mixLayers: readonly MixLayer[];
+  readonly savedMixes: readonly SavedMix[];
 }

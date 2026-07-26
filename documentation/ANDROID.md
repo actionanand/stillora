@@ -6,16 +6,16 @@ committed.
 
 ## Build files
 
-| File                                  | Purpose                                                                                          |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `capacitor.config.ts`                 | App ID, name, Angular output directory, native background and splash defaults                    |
-| `.github/workflows/android-build.yml` | Lints, tests, builds, signs, verifies and uploads Android artifacts                              |
-| `android-version.json`                | Android `versionCode` and `versionName`                                                          |
-| `scripts/bump-android-version.js`     | Increments Android versions                                                                      |
-| `scripts/patch-android.mjs`           | Applies the splash, system-bar themes and monochrome notification icon after each Capacitor sync |
-| `scripts/generate-keystore.mjs`       | Creates a PKCS12 release keystore                                                                |
-| `scripts/detect-keystore-format.mjs`  | Reports a keystore's internal format                                                             |
-| `public/stillora.png`                 | Canonical launcher, splash and Play Store icon source                                            |
+| File                                  | Purpose                                                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `capacitor.config.ts`                 | App ID, name, Angular output directory, native background and splash defaults                                |
+| `.github/workflows/android-build.yml` | Lints, tests, builds, signs, verifies and uploads Android artifacts                                          |
+| `android-version.json`                | Android `versionCode` and `versionName`                                                                      |
+| `scripts/bump-android-version.js`     | Increments Android versions                                                                                  |
+| `scripts/patch-android.mjs`           | Applies splash, system bars, notification icon and settings-backup document export after each Capacitor sync |
+| `scripts/generate-keystore.mjs`       | Creates a PKCS12 release keystore                                                                            |
+| `scripts/detect-keystore-format.mjs`  | Reports a keystore's internal format                                                                         |
+| `public/stillora.png`                 | Canonical launcher, splash and Play Store icon source                                                        |
 
 ## Local workflow
 
@@ -106,5 +106,7 @@ Angular CSS cannot style Android surfaces shown before or outside the WebView.
   appear;
 - reapplies bar styling after the app resumes or regains focus; and
 - writes `ic_stat_stillora`, a white vector icon suitable for Android notification tinting.
+- sends the full Stillora JSON backup to Android's system document picker without broad storage
+  permission.
 
 See [ANDROID_SPECIAL_CASES.md](ANDROID_SPECIAL_CASES.md) for the device verification checklist.

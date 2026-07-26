@@ -239,6 +239,75 @@
   outline-offset: 0.16rem;
 }
 
+.backup-panel {
+  display: grid;
+  gap: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.backup-copy strong {
+  font-size: 0.83rem;
+}
+
+.backup-copy p {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.69rem;
+  line-height: 1.45;
+}
+
+.backup-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.backup-actions button {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.9rem;
+  color: var(--primary);
+  background: var(--surface-raised);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.backup-actions button.primary {
+  border-color: var(--primary);
+  color: var(--on-primary);
+  background: var(--primary);
+}
+
+.backup-actions .material-symbols-rounded {
+  font-size: 1.15rem;
+}
+
+.backup-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  opacity: 0;
+}
+
+.backup-message {
+  margin: 0.8rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.8rem;
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-size: 0.7rem;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
 .privacy-note {
   display: flex;
   gap: 0.8rem;
@@ -250,6 +319,9 @@
 }
 
 .privacy-note > .material-symbols-rounded {
+  width: 1.55rem;
+  flex: 0 0 1.55rem;
+  overflow: visible;
   color: var(--primary);
   font-size: 1.55rem;
   font-variation-settings: 'FILL' 1;

@@ -91,6 +91,49 @@
     </label>
   </section>
 
+  <section class="settings-section" aria-labelledby="backup-title">
+    <div class="section-heading">
+      <div class="section-icon">
+        <span class="material-symbols-rounded" aria-hidden="true">settings_backup_restore</span>
+      </div>
+      <div>
+        <h2 id="backup-title">Backup and restore</h2>
+        <p>Move your Stillora preferences and soundscape between devices.</p>
+      </div>
+    </div>
+
+    <div class="backup-panel">
+      <div class="backup-copy">
+        <strong>Stillora JSON backup</strong>
+        <p>
+          Includes your theme, playback preferences, volume, last atmosphere, active layers and
+          saved mixes.
+        </p>
+      </div>
+      <div class="backup-actions">
+        <input
+          #backupFileInput
+          class="backup-file"
+          type="file"
+          accept=".json,application/json"
+          aria-label="Import Stillora backup JSON"
+          (change)="importBackup($event)"
+        />
+        <button type="button" (click)="backupFileInput.click()">
+          <span class="material-symbols-rounded" aria-hidden="true">upload_file</span>
+          Import backup
+        </button>
+        <button type="button" class="primary" (click)="exportBackup()">
+          <span class="material-symbols-rounded" aria-hidden="true">download</span>
+          Export backup
+        </button>
+      </div>
+    </div>
+    @if (backupMessage()) {
+      <p class="backup-message" aria-live="polite">{{ backupMessage() }}</p>
+    }
+  </section>
+
   <aside class="privacy-note">
     <span class="material-symbols-rounded" aria-hidden="true">verified_user</span>
     <div>

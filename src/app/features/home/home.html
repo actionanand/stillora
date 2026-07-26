@@ -1,14 +1,24 @@
 <section class="home-page" aria-labelledby="sound-title">
-  <app-background-video [path]="video.path()" (unavailable)="video.markUnavailable()" />
+  <app-background-video
+    [path]="video.path()"
+    [playing]="audio.playing()"
+    (unavailable)="video.markUnavailable()"
+  />
 
   <header class="home-header">
-    <a class="brand" href="/" aria-label="Stillora home">
+    <button
+      class="brand"
+      type="button"
+      aria-label="Browse all Stillora atmospheres"
+      [attr.aria-expanded]="soundNavigationOpen()"
+      (click)="openSoundNavigation()"
+    >
       <img ngSrc="stillora.png" width="46" height="46" priority alt="" />
-      <span>
+      <span class="brand-copy">
         <strong>stillora</strong>
         <small>your quiet place</small>
       </span>
-    </a>
+    </button>
     <span class="offline-pill">
       <span class="material-symbols-rounded" aria-hidden="true">cloud_off</span>
       Offline
@@ -49,6 +59,13 @@
           {{ audio.volume() === 0 ? 'volume_off' : 'volume_up' }}
         </span>
         <span>Volume</span>
+      </button>
+      <button type="button" (click)="mixerSheetOpen.set(true)">
+        <span class="material-symbols-rounded" aria-hidden="true">instant_mix</span>
+        <span>Mix</span>
+        @if (audio.mixCount()) {
+          <span class="mix-count">{{ audio.mixCount() }}</span>
+        }
       </button>
     </div>
 
@@ -94,6 +111,15 @@
   </section>
 </section>
 
+@if (soundNavigationOpen()) {
+  <app-sound-navigation
+    [sounds]="sounds"
+    [currentSoundId]="audio.currentSound().id"
+    (selected)="selectSound($event)"
+    (closed)="soundNavigationOpen.set(false)"
+  />
+}
+
 @if (timerSheetOpen()) {
   <div class="sheet-overlay">
     <button
@@ -138,6 +164,10 @@
       <p>When time ends, your sound gently fades for 15 seconds before stopping.</p>
     </section>
   </div>
+}
+
+@if (mixerSheetOpen()) {
+  <app-soundscape-mixer (closed)="mixerSheetOpen.set(false)" />
 }
 
 @if (volumeSheetOpen()) {

@@ -1,0 +1,129 @@
+<div class="sheet-overlay">
+  <button
+    type="button"
+    class="sheet-backdrop"
+    aria-label="Close soundscape mixer"
+    (click)="closed.emit()"
+  ></button>
+  <section class="mixer-sheet" role="dialog" aria-modal="true" aria-labelledby="mixer-title">
+    <header>
+      <div>
+        <span class="eyebrow">Build your own calm</span>
+        <h2 id="mixer-title">Soundscape mixer</h2>
+      </div>
+      <button
+        type="button"
+        class="close-button"
+        aria-label="Close soundscape mixer"
+        (click)="closed.emit()"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </header>
+    <p class="mixer-intro">
+      Layer up to three simple sounds over <strong>{{ audio.currentSound().title }}</strong
+      >. Each layer follows the main play, pause, timer and volume controls.
+    </p>
+    <div class="mixer-list">
+      @for (sound of mixableSounds; track sound.id) {
+        <article
+          [class.active]="audio.isMixed(sound.id)"
+          [class.primary]="sound.id === audio.currentSound().id"
+          [class.unavailable]="!audio.canMix(sound.id)"
+        >
+          <button
+            type="button"
+            class="mix-toggle"
+            [disabled]="!audio.canMix(sound.id)"
+            [attr.aria-pressed]="audio.isMixed(sound.id)"
+            (click)="audio.toggleMix(sound)"
+          >
+            <span class="sound-icon" [style.--sound-accent]="sound.accent">
+              <span class="material-symbols-rounded" aria-hidden="true">{{ sound.icon }}</span>
+            </span>
+            <span>
+              <strong>{{ sound.mixTitle ?? sound.title }}</strong>
+              <small>
+                @if (sound.mixVariant) {
+                  {{ sound.mixVariant }} ·
+                }
+                {{
+                  !audio.canMix(sound.id)
+                    ? audio.mixDisabledReason(sound.id)
+                    : audio.isMixed(sound.id)
+                      ? 'Included in this soundscape'
+                      : 'Tap to add this layer'
+                }}
+              </small>
+            </span>
+            <span class="material-symbols-rounded mix-state" aria-hidden="true">
+              {{
+                !audio.canMix(sound.id)
+                  ? sound.id === audio.currentSound().id
+                    ? 'radio_button_checked'
+                    : 'block'
+                  : audio.isMixed(sound.id)
+                    ? 'check_circle'
+                    : 'add_circle'
+              }}
+            </span>
+          </button>
+          @if (audio.isMixed(sound.id)) {
+            <div class="layer-volume">
+              <span class="material-symbols-rounded" aria-hidden="true">volume_down</span>
+              <label class="visually-hidden" [for]="'mix-volume-' + sound.id"
+                >{{ sound.mixTitle ?? sound.title }} {{ sound.mixVariant }} layer volume</label
+              >
+              <input
+                [id]="'mix-volume-' + sound.id"
+                type="range"
+                min="0.05"
+                max="1"
+                step="0.01"
+                [value]="audio.mixVolume(sound.id)"
+                (input)="updateVolume(sound.id, $event)"
+              />
+              <output [for]="'mix-volume-' + sound.id">
+                {{ audio.mixVolume(sound.id) * 100 | number: '1.0-0' }}%
+              </output>
+            </div>
+          }
+        </article>
+      }
+    </div>
+    <section class="save-mix" aria-labelledby="save-mix-title">
+      <div>
+        <strong id="save-mix-title">Save this mix</strong>
+        <small>{{ settings.savedMixCount() }} of 5 saved</small>
+      </div>
+      <div class="save-mix-controls">
+        <label class="visually-hidden" for="mix-name">Custom mix name</label>
+        <input
+          id="mix-name"
+          type="text"
+          maxlength="40"
+          autocomplete="off"
+          placeholder="e.g. Rainy reading"
+          [value]="mixName()"
+          (input)="updateMixName($event)"
+        />
+        <button
+          type="button"
+          [disabled]="!audio.mixCount() || !settings.canSaveMix()"
+          (click)="saveCurrentMix()"
+        >
+          Save
+        </button>
+      </div>
+      @if (saveMessage()) {
+        <p aria-live="polite">{{ saveMessage() }}</p>
+      }
+    </section>
+    <footer>
+      <span>{{ audio.mixCount() }} of 3 layers added</span>
+      <button type="button" [disabled]="!audio.mixCount()" (click)="audio.clearMix()">
+        Clear layers
+      </button>
+    </footer>
+  </section>
+</div>
