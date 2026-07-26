@@ -1,7 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { SOUNDS } from '../../core/data/sounds';
 import { FadeDuration, ThemePreference, TimerDuration } from '../../core/models/app.models';
-import { SettingsService } from '../../core/services/settings.service';
+import { AudioService } from '../../core/services/audio.service';
+import { BackupFileService } from '../../core/services/backup-file.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { VideoService } from '../../core/services/video.service';
+import { SettingsStore } from '../../core/stores/settings.store';
 import {
   SelectPicker,
   SelectPickerOption,
@@ -14,8 +18,12 @@ import {
   styleUrl: './settings.scss',
 })
 export class Settings {
-  protected readonly settings = inject(SettingsService);
+  protected readonly settings = inject(SettingsStore);
   private readonly themeService = inject(ThemeService);
+  private readonly audio = inject(AudioService);
+  private readonly video = inject(VideoService);
+  private readonly backupFiles = inject(BackupFileService);
+  protected readonly backupMessage = signal('');
 
   protected readonly themes: readonly {
     value: ThemePreference;
@@ -76,5 +84,43 @@ export class Settings {
 
   protected setRememberSound(event: Event): void {
     this.settings.updateRememberSound((event.target as HTMLInputElement).checked);
+  }
+
+  protected exportBackup(): void {
+    try {
+      const destination = this.backupFiles.export(this.settings.createBackup());
+      this.backupMessage.set(
+        destination === 'native'
+          ? 'Choose where to save your Stillora backup.'
+          : 'Your Stillora backup was exported.',
+      );
+    } catch (error) {
+      this.backupMessage.set(
+        error instanceof Error ? error.message : 'The backup could not be exported.',
+      );
+    }
+  }
+
+  protected async importBackup(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    try {
+      const raw = await this.backupFiles.import(file);
+      const restored = this.settings.restoreBackup(raw);
+      const selectedSound = SOUNDS.find((sound) => sound.id === restored.lastSoundId);
+      if (selectedSound) {
+        this.video.select(selectedSound);
+        await this.audio.select(selectedSound);
+      }
+      await this.audio.replaceMix(restored.mixLayers);
+      this.backupMessage.set('Backup restored. Your preferences and soundscape are ready.');
+    } catch (error) {
+      this.backupMessage.set(
+        error instanceof Error ? error.message : 'The backup could not be imported.',
+      );
+    }
   }
 }

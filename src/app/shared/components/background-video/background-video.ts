@@ -1,19 +1,19 @@
-import { Component, effect, input, output, signal } from '@angular/core';
+import { Component, effect, ElementRef, input, output, signal, viewChild } from '@angular/core';
 
 @Component({
   selector: 'app-background-video',
   template: `
     <div class="ambient-backdrop" [class.fallback]="failed()">
       <video
+        #ambientVideo
         [src]="path()"
         [class.ready]="ready() && !failed()"
-        autoplay
         muted
         loop
         playsinline
         preload="metadata"
         aria-hidden="true"
-        (canplay)="ready.set(true)"
+        (canplay)="onCanPlay()"
         (error)="onError()"
       ></video>
       <div class="veil"></div>
@@ -24,9 +24,11 @@ import { Component, effect, input, output, signal } from '@angular/core';
 })
 export class BackgroundVideo {
   readonly path = input.required<string>();
+  readonly playing = input.required<boolean>();
   readonly unavailable = output<void>();
   readonly ready = signal(false);
   readonly failed = signal(false);
+  private readonly video = viewChild<ElementRef<HTMLVideoElement>>('ambientVideo');
 
   constructor() {
     effect(() => {
@@ -34,6 +36,21 @@ export class BackgroundVideo {
       this.ready.set(false);
       this.failed.set(false);
     });
+    effect(() => {
+      const video = this.video()?.nativeElement;
+      if (!video) return;
+      if (this.playing()) {
+        void video.play().catch(() => undefined);
+      } else {
+        video.pause();
+      }
+    });
+  }
+
+  onCanPlay(): void {
+    this.ready.set(true);
+    const video = this.video()?.nativeElement;
+    if (video && this.playing()) void video.play().catch(() => undefined);
   }
 
   onError(): void {

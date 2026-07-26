@@ -1,0 +1,53 @@
+<div class="sound-nav-overlay">
+  <button
+    type="button"
+    class="sound-nav-backdrop"
+    aria-label="Close atmosphere navigation"
+    (click)="closed.emit()"
+  ></button>
+  <aside class="sound-nav" role="dialog" aria-modal="true" aria-labelledby="sound-nav-title">
+    <header>
+      <div class="sound-nav-brand">
+        <img ngSrc="stillora.png" width="52" height="52" alt="" />
+        <div>
+          <span class="eyebrow">Stillora library</span>
+          <h2 id="sound-nav-title">All atmospheres</h2>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="close-button"
+        aria-label="Close atmosphere navigation"
+        (click)="closed.emit()"
+      >
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </header>
+    <p>Choose a sound to begin, or keep scrolling through the library below.</p>
+    <div class="sound-nav-list">
+      @for (sound of sounds(); track sound.id) {
+        <button
+          type="button"
+          [class.selected]="sound.id === currentSoundId()"
+          [attr.aria-pressed]="sound.id === currentSoundId()"
+          (click)="selected.emit(sound)"
+        >
+          <span class="sound-icon" [style.--sound-accent]="sound.accent">
+            <span class="material-symbols-rounded" aria-hidden="true">{{ sound.icon }}</span>
+          </span>
+          <span>
+            <strong>{{ sound.title }}</strong>
+            <small>{{ sound.description }}</small>
+          </span>
+          @if (sound.id === currentSoundId()) {
+            <span class="material-symbols-rounded selected-mark" aria-hidden="true"
+              >graphic_eq</span
+            >
+          } @else {
+            <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+          }
+        </button>
+      }
+    </div>
+  </aside>
+</div>

@@ -53,3 +53,11 @@ Test:
 `ic_stat_stillora` is white vector artwork on transparency. This is intentional: Android masks and
 tints notification small icons for the current system surface. Do not use the full-color launcher
 image as a notification small icon; it can render as a solid square.
+
+## Settings backup files
+
+Stillora backups are small, human-readable JSON files. In the Android build,
+`StilloraNative.exportBackupJson(...)` opens `ACTION_CREATE_DOCUMENT`, allowing the user to choose
+the destination. The app writes only to that selected document and does not request broad storage
+permission. Import uses the WebView file chooser; the NgRx Signal Store validates and maps the
+versioned schema before restoring theme, playback preferences, last atmosphere and mixer layers.
