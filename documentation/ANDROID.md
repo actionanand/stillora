@@ -80,6 +80,8 @@ Add these under **Repository Settings → Secrets and variables → Actions**:
 Generate the keystore once on a trusted Linux or WSL machine:
 
 ```bash
+npm run generate-keystore -- --password 'YOUR_STRONG_PASSWORD'
+# or
 npm run generate-keystore
 test -s release-keystore.jks && base64 -w 0 release-keystore.jks > keystore.b64.txt
 ```
