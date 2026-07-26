@@ -1,9 +1,10 @@
 import { DOCUMENT } from '@angular/common';
-import { effect, inject } from '@angular/core';
+import { computed, effect, inject } from '@angular/core';
 import {
   getState,
   patchState,
   signalStore,
+  withComputed,
   withHooks,
   withMethods,
   withState,
@@ -12,6 +13,7 @@ import {
   AppSettings,
   FadeDuration,
   MixLayer,
+  SavedMix,
   StilloraBackup,
   ThemePreference,
   TimerDuration,
@@ -27,6 +29,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   lastSoundId: 'gentle-rain',
   lastBackground: 'video/rain.mp4',
   mixLayers: [],
+  savedMixes: [],
 };
 
 function readSettings(document: Document): AppSettings {
@@ -67,6 +70,7 @@ function mapSettings(value: unknown): AppSettings {
         ? value['lastBackground']
         : DEFAULT_SETTINGS.lastBackground,
     mixLayers: readMixLayers(value['mixLayers']),
+    savedMixes: readSavedMixes(value['savedMixes']),
   };
 }
 
@@ -98,6 +102,36 @@ function readMixLayers(value: unknown): readonly MixLayer[] {
   return layers;
 }
 
+function readSavedMixes(value: unknown): readonly SavedMix[] {
+  if (!Array.isArray(value)) return [];
+  const savedMixes: SavedMix[] = [];
+  const ids = new Set<string>();
+
+  for (const item of value.slice(0, 5)) {
+    if (
+      !isRecord(item) ||
+      typeof item['id'] !== 'string' ||
+      ids.has(item['id']) ||
+      typeof item['name'] !== 'string' ||
+      typeof item['primarySoundId'] !== 'string' ||
+      typeof item['createdAt'] !== 'string'
+    ) {
+      continue;
+    }
+    const name = item['name'].trim().slice(0, 40);
+    if (!name) continue;
+    savedMixes.push({
+      id: item['id'],
+      name,
+      primarySoundId: item['primarySoundId'],
+      layers: readMixLayers(item['layers']),
+      createdAt: item['createdAt'],
+    });
+    ids.add(item['id']);
+  }
+  return savedMixes;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -126,6 +160,10 @@ function isTimerDuration(value: unknown): value is TimerDuration {
 export const SettingsStore = signalStore(
   { providedIn: 'root' },
   withState(() => readSettings(inject(DOCUMENT))),
+  withComputed(({ savedMixes }) => ({
+    savedMixCount: computed(() => savedMixes().length),
+    canSaveMix: computed(() => savedMixes().length < 5),
+  })),
   withMethods((store) => {
     const update = (changes: Partial<AppSettings>): void => {
       patchState(store, changes);
@@ -152,6 +190,32 @@ export const SettingsStore = signalStore(
       },
       updateMixLayers(mixLayers: readonly MixLayer[]): void {
         update({ mixLayers });
+      },
+      saveMix(name: string, primarySoundId: string, layers: readonly MixLayer[]): SavedMix {
+        const normalizedName = name.trim().replace(/\s+/g, ' ').slice(0, 40);
+        if (!normalizedName) throw new Error('Enter a name for this mix.');
+        if (store.savedMixes().length >= 5) {
+          throw new Error('You can save up to five mixes. Delete one before saving another.');
+        }
+        if (
+          store
+            .savedMixes()
+            .some((mix) => mix.name.toLocaleLowerCase() === normalizedName.toLocaleLowerCase())
+        ) {
+          throw new Error('A saved mix already uses this name.');
+        }
+        const savedMix: SavedMix = {
+          id: `mix-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          name: normalizedName,
+          primarySoundId,
+          layers: readMixLayers(layers),
+          createdAt: new Date().toISOString(),
+        };
+        update({ savedMixes: [...store.savedMixes(), savedMix] });
+        return savedMix;
+      },
+      deleteSavedMix(id: string): void {
+        update({ savedMixes: store.savedMixes().filter((mix) => mix.id !== id) });
       },
       createBackup(): StilloraBackup {
         return {

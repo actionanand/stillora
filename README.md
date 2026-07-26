@@ -34,6 +34,7 @@ src/app/
 |   `-- stores/        # NgRx Signal Store with validated local persistence
 |-- features/
 |   |-- home/          # Player, atmosphere drawer and soundscape mixer
+|   |-- mixes/         # Up to five named, reusable soundscape presets
 |   |-- settings/      # Theme and playback preferences
 |   `-- about/         # Offline/privacy information and credits
 `-- shared/components/ # Background video and Android-style picker
@@ -44,8 +45,8 @@ Feature routes are lazy loaded and every service has one responsibility:
 - `AudioService` owns the primary audio element and up to three optional mix layers, including
   looping, cross-fades, fades, per-layer volume and missing-file errors.
 - `TimerService` owns the session countdown and continuous mode.
-- `SettingsStore` uses `@ngrx/signals` for theme, timer, volume, last atmosphere and saved mix state,
-  validating values as they load from `localStorage`.
+- `SettingsStore` uses `@ngrx/signals` for theme, timer, volume, last atmosphere, active layers and
+  up to five named presets, validating values as they load from `localStorage`.
 - `ThemeService` resolves Light, Dark or System appearance and sends the effective result to
   Android's native system-bar bridge.
 - `VideoService` selects the matching bundled video and exposes a gradient fallback state.

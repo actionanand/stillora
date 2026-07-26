@@ -1,5 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { computed, inject, Injectable, OnDestroy, signal } from '@angular/core';
+import { getMixAvailability } from '../data/mix-compatibility';
 import { SOUNDS } from '../data/sounds';
 import { MixLayer, Sound } from '../models/app.models';
 import { SettingsStore } from '../stores/settings.store';
@@ -10,8 +11,10 @@ export class AudioService implements OnDestroy {
   private readonly settings = inject(SettingsStore);
   private activeAudio: HTMLAudioElement | null = null;
   private readonly mixAudio = new Map<string, HTMLAudioElement>();
+  private readonly disposedAudio = new WeakSet<HTMLAudioElement>();
   private fadingAudio: HTMLAudioElement | null = null;
   private fadeTimer: ReturnType<typeof setInterval> | null = null;
+  private noticeTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly currentSound = signal<Sound>(this.initialSound());
   readonly playing = signal(false);
@@ -34,7 +37,7 @@ export class AudioService implements OnDestroy {
   }
 
   async play(): Promise<void> {
-    this.error.set('');
+    this.clearError();
     if (!this.activeAudio) this.activeAudio = this.createAudio(this.currentSound());
     this.activeAudio.volume = this.volume();
     this.loading.set(true);
@@ -43,7 +46,7 @@ export class AudioService implements OnDestroy {
       await Promise.allSettled([...this.mixAudio.values()].map((layerAudio) => layerAudio.play()));
       this.playing.set(true);
     } catch {
-      this.error.set('This sound could not be played. Try another atmosphere.');
+      this.showError('This sound could not be played. Try another atmosphere.');
       this.playing.set(false);
     } finally {
       this.loading.set(false);
@@ -74,10 +77,10 @@ export class AudioService implements OnDestroy {
     if (sound.id === this.currentSound().id) return;
     const wasPlaying = this.playing();
     const previous = this.activeAudio;
-    this.removeMix(sound.id);
+    this.clearMix();
     this.currentSound.set(sound);
     this.settings.rememberSelection(sound.id, sound.videoPath);
-    this.error.set('');
+    this.clearError();
 
     if (!wasPlaying) {
       previous?.pause();
@@ -95,7 +98,7 @@ export class AudioService implements OnDestroy {
       this.crossFade(previous, incoming, this.settings.fadeDuration());
     } catch {
       incoming.pause();
-      this.error.set('This sound is unavailable. Your previous atmosphere will continue.');
+      this.showError('This sound is unavailable. Your previous atmosphere will continue.');
     } finally {
       this.loading.set(false);
     }
@@ -108,32 +111,33 @@ export class AudioService implements OnDestroy {
   }
 
   async toggleMix(sound: Sound): Promise<void> {
-    if (!sound.mixable || sound.id === this.currentSound().id) return;
+    if (!sound.mixable || !this.canMix(sound.id)) return;
     if (this.isMixed(sound.id)) {
       this.removeMix(sound.id);
       return;
     }
     if (this.mixCount() >= 3) {
-      this.error.set('Your soundscape can contain up to three additional layers.');
+      this.showError('Your soundscape can contain up to three additional layers.');
       return;
     }
 
     const layer: MixLayer = { soundId: sound.id, volume: 0.34 };
     const audio = this.createAudio(sound, () => {
       this.removeMix(sound.id);
-      this.error.set(`${sound.title} could not be added to this soundscape.`);
+      this.showError(`${sound.title} could not be added to this soundscape.`);
     });
     audio.volume = this.layerVolume(layer.volume);
     this.mixAudio.set(sound.id, audio);
     this.settings.updateMixLayers([...this.mixLayers(), layer]);
-    this.error.set('');
+    this.clearError();
 
     if (!this.playing()) return;
     try {
       await audio.play();
     } catch {
+      if (this.disposedAudio.has(audio)) return;
       this.removeMix(sound.id);
-      this.error.set(`${sound.title} could not be added to this soundscape.`);
+      this.showError(`${sound.title} could not be added to this soundscape.`);
     }
   }
 
@@ -152,6 +156,14 @@ export class AudioService implements OnDestroy {
     return this.mixLayers().some((layer) => layer.soundId === soundId);
   }
 
+  canMix(soundId: string): boolean {
+    return getMixAvailability(this.currentSound().id, soundId).allowed;
+  }
+
+  mixDisabledReason(soundId: string): string {
+    return getMixAvailability(this.currentSound().id, soundId).reason;
+  }
+
   mixVolume(soundId: string): number {
     return this.mixLayers().find((layer) => layer.soundId === soundId)?.volume ?? 0.34;
   }
@@ -159,6 +171,7 @@ export class AudioService implements OnDestroy {
   clearMix(): void {
     this.disposeMixAudio();
     this.settings.updateMixLayers([]);
+    this.clearError();
   }
 
   async replaceMix(layers: readonly MixLayer[]): Promise<void> {
@@ -170,7 +183,7 @@ export class AudioService implements OnDestroy {
       const sound = SOUNDS.find((candidate) => candidate.id === layer.soundId);
       if (
         !sound?.mixable ||
-        sound.id === this.currentSound().id ||
+        !this.canMix(sound.id) ||
         acceptedIds.has(sound.id) ||
         !Number.isFinite(layer.volume)
       ) {
@@ -182,7 +195,7 @@ export class AudioService implements OnDestroy {
       };
       const audio = this.createAudio(sound, () => {
         this.removeMix(sound.id);
-        this.error.set(`${sound.title} could not be added to this soundscape.`);
+        this.showError(`${sound.title} could not be added to this soundscape.`);
       });
       audio.volume = this.layerVolume(normalized.volume);
       this.mixAudio.set(sound.id, audio);
@@ -221,10 +234,10 @@ export class AudioService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.clearError();
     this.stop();
     for (const audio of this.mixAudio.values()) {
-      audio.pause();
-      audio.src = '';
+      this.disposeAudio(audio);
     }
     this.mixAudio.clear();
     this.activeAudio = null;
@@ -244,12 +257,13 @@ export class AudioService implements OnDestroy {
     audio.preload = 'auto';
     audio.volume = this.volume();
     audio.addEventListener('error', () => {
+      if (this.disposedAudio.has(audio)) return;
       if (onError) {
         onError();
         return;
       }
       if (this.currentSound().id === sound.id) {
-        this.error.set('This sound file is missing or cannot be read.');
+        this.showError('This sound file is missing or cannot be read.');
         this.playing.set(false);
       }
     });
@@ -287,8 +301,7 @@ export class AudioService implements OnDestroy {
       this.fadeTimer = null;
     }
     if (this.fadingAudio) {
-      this.fadingAudio.pause();
-      this.fadingAudio.src = '';
+      this.disposeAudio(this.fadingAudio);
       this.fadingAudio = null;
     }
   }
@@ -296,11 +309,11 @@ export class AudioService implements OnDestroy {
   private removeMix(soundId: string): void {
     const audio = this.mixAudio.get(soundId);
     if (audio) {
-      audio.pause();
-      audio.src = '';
+      this.disposeAudio(audio);
       this.mixAudio.delete(soundId);
     }
     this.settings.updateMixLayers(this.mixLayers().filter((layer) => layer.soundId !== soundId));
+    this.clearError();
   }
 
   private applyMixVolumes(): void {
@@ -327,7 +340,7 @@ export class AudioService implements OnDestroy {
       const sound = SOUNDS.find((candidate) => candidate.id === layer.soundId);
       if (
         !sound?.mixable ||
-        sound.id === this.currentSound().id ||
+        !this.canMix(sound.id) ||
         restoredIds.has(sound.id) ||
         !Number.isFinite(layer.volume)
       ) {
@@ -339,7 +352,7 @@ export class AudioService implements OnDestroy {
       };
       const audio = this.createAudio(sound, () => {
         this.removeMix(sound.id);
-        this.error.set(`${sound.title} could not be restored to this soundscape.`);
+        this.showError(`${sound.title} could not be restored to this soundscape.`);
       });
       audio.volume = this.layerVolume(normalized.volume);
       this.mixAudio.set(sound.id, audio);
@@ -351,9 +364,32 @@ export class AudioService implements OnDestroy {
 
   private disposeMixAudio(): void {
     for (const audio of this.mixAudio.values()) {
-      audio.pause();
-      audio.src = '';
+      this.disposeAudio(audio);
     }
     this.mixAudio.clear();
+  }
+
+  private disposeAudio(audio: HTMLAudioElement): void {
+    this.disposedAudio.add(audio);
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+  }
+
+  private showError(message: string): void {
+    this.clearError();
+    this.error.set(message);
+    this.noticeTimer = setTimeout(() => {
+      this.error.set('');
+      this.noticeTimer = null;
+    }, 4500);
+  }
+
+  private clearError(): void {
+    if (this.noticeTimer) {
+      clearTimeout(this.noticeTimer);
+      this.noticeTimer = null;
+    }
+    this.error.set('');
   }
 }

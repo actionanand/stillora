@@ -20,6 +20,14 @@ export interface MixLayer {
   readonly volume: number;
 }
 
+export interface SavedMix {
+  readonly id: string;
+  readonly name: string;
+  readonly primarySoundId: string;
+  readonly layers: readonly MixLayer[];
+  readonly createdAt: string;
+}
+
 export interface StilloraBackup {
   readonly schemaVersion: 1;
   readonly app: 'Stillora';
@@ -36,4 +44,5 @@ export interface AppSettings {
   readonly lastSoundId: string;
   readonly lastBackground: string;
   readonly mixLayers: readonly MixLayer[];
+  readonly savedMixes: readonly SavedMix[];
 }

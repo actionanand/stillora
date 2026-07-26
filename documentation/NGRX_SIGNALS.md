@@ -101,6 +101,7 @@ export interface AppSettings {
   readonly lastSoundId: string;
   readonly lastBackground: string;
   readonly mixLayers: readonly MixLayer[];
+  readonly savedMixes: readonly SavedMix[];
 }
 ```
 
@@ -263,7 +264,8 @@ Use `switchMap` when a newer request should cancel an older one, `concatMap` whe
 
 Stillora separates state mapping from file transport:
 
-1. `SettingsStore.createBackup()` maps the current state snapshot to a versioned backup.
+1. `SettingsStore.createBackup()` maps the current state snapshot—including up to five named saved
+   mixes—to a versioned backup.
 2. `BackupFileService` serializes and downloads it or passes it to Android's document picker.
 3. `BackupFileService` parses imported JSON as `unknown`.
 4. `SettingsStore.restoreBackup()` checks the app and schema, maps validated settings, and patches
@@ -286,7 +288,8 @@ The backup envelope is versioned:
     "volume": 0.72,
     "lastSoundId": "gentle-rain",
     "lastBackground": "video/rain.mp4",
-    "mixLayers": []
+    "mixLayers": [],
+    "savedMixes": []
   }
 }
 ```

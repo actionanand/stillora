@@ -1,0 +1,59 @@
+<section class="page mixes-page" aria-labelledby="mixes-title">
+  <header class="page-heading">
+    <span class="page-icon material-symbols-rounded" aria-hidden="true">library_music</span>
+    <div>
+      <p class="eyebrow">Your soundscapes</p>
+      <h1 id="mixes-title">Saved mixes</h1>
+      <p>Return to your favorite combinations in one tap.</p>
+    </div>
+  </header>
+
+  <div class="mix-count">
+    <span>{{ settings.savedMixCount() }} of 5 saved</span>
+    <span>Backups include every saved mix</span>
+  </div>
+
+  @if (settings.savedMixes().length) {
+    <div class="mix-grid">
+      @for (mix of settings.savedMixes(); track mix.id) {
+        <article>
+          <span class="mix-icon material-symbols-rounded" aria-hidden="true">instant_mix</span>
+          <div class="mix-copy">
+            <h2>{{ mix.name }}</h2>
+            <p>
+              <strong>{{ primaryTitle(mix) }}</strong> with {{ layerTitles(mix) }}
+            </p>
+            <small
+              >{{ mix.layers.length }} {{ mix.layers.length === 1 ? 'layer' : 'layers' }}</small
+            >
+          </div>
+          <div class="mix-actions">
+            <button type="button" class="play-mix" (click)="playMix(mix)">
+              <span class="material-symbols-rounded" aria-hidden="true">play_arrow</span>
+              Open mix
+            </button>
+            <button
+              type="button"
+              class="delete-mix"
+              [attr.aria-label]="'Delete saved mix ' + mix.name"
+              (click)="deleteMix(mix)"
+            >
+              <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <section class="empty-state" aria-labelledby="empty-mixes-title">
+      <span class="material-symbols-rounded" aria-hidden="true">queue_music</span>
+      <h2 id="empty-mixes-title">No saved mixes yet</h2>
+      <p>Open the mixer from Relax, add layers, give the combination a name, and save it here.</p>
+      <a routerLink="/">Create a mix</a>
+    </section>
+  }
+
+  @if (message()) {
+    <p class="mix-message" aria-live="polite">{{ message() }}</p>
+  }
+</section>
