@@ -1,5 +1,4 @@
-import { DOCUMENT } from '@angular/common';
-import { inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { MediaSession } from '@capgo/capacitor-media-session';
 import { Sound } from '../models/app.models';
 
@@ -19,7 +18,6 @@ interface MediaControlState {
 
 @Injectable({ providedIn: 'root' })
 export class MediaControlsService {
-  private readonly document = inject(DOCUMENT);
   private handlers: MediaControlHandlers | null = null;
   private handlersRegistered = false;
   private operation = Promise.resolve();
@@ -62,13 +60,6 @@ export class MediaControlsService {
         state.mixCount === 0
           ? 'Ambient atmosphere'
           : `${state.mixCount} additional ${state.mixCount === 1 ? 'layer' : 'layers'}`,
-      artwork: [
-        {
-          src: new URL('stillora.png', this.document.baseURI).href,
-          sizes: '512x512',
-          type: 'image/png',
-        },
-      ],
     });
     await MediaSession.setPlaybackState({
       playbackState: state.playing ? 'playing' : 'paused',

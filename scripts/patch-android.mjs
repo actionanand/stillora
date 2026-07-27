@@ -34,6 +34,17 @@ await access(javaPath).catch(() => {
 });
 
 let manifest = await readFile(manifestPath, 'utf8');
+const foregroundServicePermissions = [
+  'android.permission.FOREGROUND_SERVICE',
+  'android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK',
+];
+for (const permission of foregroundServicePermissions) {
+  if (manifest.includes(`android:name="${permission}"`)) continue;
+  manifest = manifest.replace(
+    /(<manifest\b[^>]*>)/,
+    `$1\n\n    <uses-permission android:name="${permission}" />`,
+  );
+}
 manifest = manifest.replace(
   /<activity\b(?=[^>]*android:name="\.MainActivity")[^>]*>/,
   (activity) =>
@@ -351,4 +362,6 @@ public class MainActivity extends BridgeActivity {
 `;
 
 await writeFile(javaPath, source, 'utf8');
-console.log('Applied Stillora Android splash, system-bar, and white notification-icon patches.');
+console.log(
+  'Applied Stillora Android splash, system-bar, media-playback permission, and notification-icon patches.',
+);

@@ -55,6 +55,11 @@ The dependency is already declared in `package.json`; running the first command 
 `package-lock.json`. A normal `npm run android:sync` builds Angular, synchronizes the plugin, and
 reapplies Stillora's native patch.
 
+The native patch declares both `FOREGROUND_SERVICE` and
+`FOREGROUND_SERVICE_MEDIA_PLAYBACK`. Android 14 and newer enforce the type-specific permission
+when the media plugin starts its playback foreground service. Omitting it causes a native
+`SecurityException` when Play is pressed.
+
 The **Settings > Playback > Notification media controls** switch is enabled by default. It is
 stored by `SettingsStore` in local storage and included in Stillora JSON exports. Turning it off
 removes the active media session without stopping in-app playback.
@@ -63,7 +68,7 @@ Android chooses the exact button arrangement for the OS version and device. Test
 device:
 
 1. Start an atmosphere and open the notification shade and Quick Settings.
-2. Confirm the Stillora title, artwork, atmosphere name, and playing state.
+2. Confirm the Stillora title, atmosphere name, and playing state.
 3. Pause and resume from Android, then confirm the in-app button and background video follow.
 4. Stop from Android and confirm audio, mixer layers, video, and the media notification stop.
 5. Repeat from the lock screen and a headset if available.

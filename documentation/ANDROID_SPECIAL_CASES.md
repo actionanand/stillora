@@ -69,6 +69,11 @@ Android can remove the controls. Android controls the final notification and Qui
 Run `npx cap sync android` after installing or updating the plugin. Browser-only testing cannot
 verify the Android notification, lock-screen, headset, or background-process behavior.
 
+The plugin service declares `android:foregroundServiceType="mediaPlayback"`. Stillora's native
+patch adds the matching `android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK` permission required
+when targeting Android 14 or newer. Keep that permission in the merged manifest; otherwise Android
+throws a process-level `SecurityException` as playback starts.
+
 ## Settings backup files
 
 Stillora backups are small, human-readable JSON files. In the Android build,
