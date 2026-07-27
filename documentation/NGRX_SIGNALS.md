@@ -96,6 +96,7 @@ export interface AppSettings {
   readonly theme: 'light' | 'dark' | 'system';
   readonly fadeDuration: 5 | 10 | 15;
   readonly rememberSound: boolean;
+  readonly mediaControlsEnabled: boolean;
   readonly defaultTimer: 5 | 10 | 15 | 20 | 30 | 45 | 60 | 'continuous';
   readonly volume: number;
   readonly lastSoundId: string;
@@ -284,6 +285,7 @@ The backup envelope is versioned:
     "theme": "system",
     "fadeDuration": 5,
     "rememberSound": true,
+    "mediaControlsEnabled": true,
     "defaultTimer": 15,
     "volume": 0.72,
     "lastSoundId": "gentle-rain",

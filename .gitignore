@@ -21,7 +21,7 @@ yarn-error.log
 *.launch
 .settings/
 *.sublime-workspace
-/reference
+# /reference
 /android
 /releases
 /release-keystore.jks

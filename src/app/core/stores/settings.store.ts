@@ -24,6 +24,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   theme: 'system',
   fadeDuration: 5,
   rememberSound: true,
+  mediaControlsEnabled: true,
   defaultTimer: 5,
   volume: 0.72,
   lastSoundId: 'gentle-rain',
@@ -54,6 +55,10 @@ function mapSettings(value: unknown): AppSettings {
       typeof value['rememberSound'] === 'boolean'
         ? value['rememberSound']
         : DEFAULT_SETTINGS.rememberSound,
+    mediaControlsEnabled:
+      typeof value['mediaControlsEnabled'] === 'boolean'
+        ? value['mediaControlsEnabled']
+        : DEFAULT_SETTINGS.mediaControlsEnabled,
     defaultTimer: isTimerDuration(value['defaultTimer'])
       ? value['defaultTimer']
       : DEFAULT_SETTINGS.defaultTimer,
@@ -178,6 +183,9 @@ export const SettingsStore = signalStore(
       },
       updateRememberSound(rememberSound: boolean): void {
         update({ rememberSound });
+      },
+      updateMediaControlsEnabled(mediaControlsEnabled: boolean): void {
+        update({ mediaControlsEnabled });
       },
       updateDefaultTimer(defaultTimer: TimerDuration): void {
         update({ defaultTimer });

@@ -44,6 +44,8 @@ Feature routes are lazy loaded and every service has one responsibility:
 
 - `AudioService` owns the primary audio element and up to three optional mix layers, including
   looping, cross-fades, fades, per-layer volume and missing-file errors.
+- `MediaControlsService` publishes the soundscape and play, pause, and stop actions to Android's
+  notification, Quick Settings, lock screen, and supported media buttons.
 - `TimerService` owns the session countdown and continuous mode.
 - `SettingsStore` uses `@ngrx/signals` for theme, timer, volume, last atmosphere, active layers and
   up to five named presets, validating values as they load from `localStorage`.
@@ -57,12 +59,17 @@ All audio and video files are served from `public/`; there is no account, databa
 
 ## Android
 
-See [documentation/ANDROID.md](documentation/ANDROID.md) for local builds, versioning, GitHub
-Actions artifacts and signing. Splash-screen and system-bar behavior is documented in
-[documentation/ANDROID_SPECIAL_CASES.md](documentation/ANDROID_SPECIAL_CASES.md).
+See [ANDROID.md](ANDROID.md) for local builds, versioning, GitHub Actions artifacts and signing.
+Splash-screen, system-bar, and media-session behavior is documented in
+[ANDROID_SPECIAL_CASES.md](ANDROID_SPECIAL_CASES.md).
+
+## Media assets
+
+See [MEDIA_ASSETS.md](MEDIA_ASSETS.md) for audio/video libraries, licence checks, OGG conversion,
+video preparation, and the checklist for adding new Stillora media.
 
 ## State management
 
-See [documentation/NGRX_SIGNALS.md](documentation/NGRX_SIGNALS.md) for the project-focused guide to
-SignalStore state, side effects, localStorage persistence, JSON backup mapping, testing, and the
-differences from classic `@ngrx/store`.
+See [NGRX_SIGNALS.md](NGRX_SIGNALS.md) for the project-focused guide to SignalStore state, side
+effects, localStorage persistence, JSON backup mapping, testing, and the differences from classic
+`@ngrx/store`.
