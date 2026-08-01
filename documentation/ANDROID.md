@@ -6,16 +6,16 @@ committed.
 
 ## Build files
 
-| File                                  | Purpose                                                                                                      |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `capacitor.config.ts`                 | App ID, name, Angular output directory, native background and splash defaults                                |
-| `.github/workflows/android-build.yml` | Lints, tests, builds, signs, verifies and uploads Android artifacts                                          |
-| `android-version.json`                | Android `versionCode` and `versionName`                                                                      |
-| `scripts/bump-android-version.js`     | Increments Android versions                                                                                  |
-| `scripts/patch-android.mjs`           | Applies splash, system bars, notification icon and settings-backup document export after each Capacitor sync |
-| `scripts/generate-keystore.mjs`       | Creates a PKCS12 release keystore                                                                            |
-| `scripts/detect-keystore-format.mjs`  | Reports a keystore's internal format                                                                         |
-| `public/stillora.png`                 | Canonical launcher, splash and Play Store icon source                                                        |
+| File                                  | Purpose                                                                                        |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `capacitor.config.ts`                 | App ID, name, Angular output directory, native background and splash defaults                  |
+| `.github/workflows/android-build.yml` | Lints, tests, builds, signs, verifies and uploads Android artifacts                            |
+| `android-version.json`                | Android `versionCode` and `versionName`                                                        |
+| `scripts/bump-android-version.js`     | Increments Android versions                                                                    |
+| `scripts/patch-android.mjs`           | Applies R8, splash, system bars, notification icon and backup export after each Capacitor sync |
+| `scripts/generate-keystore.mjs`       | Creates a PKCS12 release keystore                                                              |
+| `scripts/detect-keystore-format.mjs`  | Reports a keystore's internal format                                                           |
+| `public/stillora.png`                 | Canonical launcher, splash and Play Store icon source                                          |
 
 ## Local workflow
 
@@ -101,11 +101,22 @@ The workflow runs manually, on the `main-android` branch, and for `v*` tags.
 - Without signing secrets, or when signing fails, CI publishes clearly named
   `stillora-<version>-unsigned.apk` and `stillora-<version>-unsigned.aab`.
 - APK, AAB and `playstore-icon.png` are retained as workflow artifacts for 30 days.
+- Every release requires and preserves its matching R8 mapping as
+  `stillora-<version>-mapping.txt`.
 - Builds on `main-android` also commit the generated release files under `releases/`.
 - Tag builds create a GitHub Release.
 - A missing APK or AAB fails the job instead of producing an empty successful workflow.
 
-The CI environment uses minimum SDK 24, target SDK 35, Java 21 and Node 24.16.
+The CI environment uses minimum SDK 24, target SDK 36, Java 21 and Node 24.16.
+
+## R8 optimization and Play Console mappings
+
+Release builds enable R8 obfuscation and resource shrinking. The workflow fails when Gradle does
+not generate a non-empty mapping, then preserves that exact file with the APK and AAB for Play
+Console crash and ANR deobfuscation.
+
+See [R8-DEOBFUSCATION.md](R8-DEOBFUSCATION.md) for the generated Gradle configuration, keep rules,
+mapping location, Play Console upload steps, and physical-device verification checklist.
 
 ## Signing secrets
 

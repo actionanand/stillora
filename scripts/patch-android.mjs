@@ -20,6 +20,8 @@ async function fileExists(path) {
 
 const javaPath = resolve('android/app/src/main/java', ...appId.split('.'), 'MainActivity.java');
 const manifestPath = resolve('android/app/src/main/AndroidManifest.xml');
+const gradlePath = resolve('android/app/build.gradle');
+const proguardPath = resolve('android/app/proguard-rules.pro');
 const resPath = resolve('android/app/src/main/res');
 const stylesPath = resolve(resPath, 'values/styles.xml');
 const nightStylesPath = resolve(resPath, 'values-night/styles.xml');
@@ -56,6 +58,38 @@ manifest = manifest.replace(
       : activity.replace(/>$/, '\n            android:theme="@style/AppTheme.NoActionBarLaunch">'),
 );
 await writeFile(manifestPath, manifest, 'utf8');
+
+let gradle = await readFile(gradlePath, 'utf8');
+gradle = gradle.replace(/minifyEnabled\s+false/, 'minifyEnabled true');
+if (!gradle.includes('shrinkResources true')) {
+  gradle = gradle.replace(
+    /minifyEnabled\s+true/,
+    'minifyEnabled true\n            shrinkResources true',
+  );
+}
+if (!gradle.includes("proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')")) {
+  gradle = gradle.replace(
+    /shrinkResources\s+true/,
+    "shrinkResources true\n            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'",
+  );
+}
+if (!gradle.includes('minifyEnabled true') || !gradle.includes('shrinkResources true')) {
+  throw new Error(`Could not enable R8 release optimization in ${gradlePath}.`);
+}
+await writeFile(gradlePath, gradle, 'utf8');
+
+const webViewKeepRules = `
+# Stillora exposes these methods to the Angular WebView at runtime.
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+`;
+const existingProguardRules = (await fileExists(proguardPath))
+  ? await readFile(proguardPath, 'utf8')
+  : '';
+if (!existingProguardRules.includes('@android.webkit.JavascriptInterface <methods>')) {
+  await writeFile(proguardPath, `${existingProguardRules.trimEnd()}${webViewKeepRules}`, 'utf8');
+}
 
 await mkdir(dirname(notificationIconPath), { recursive: true });
 await writeFile(
@@ -363,5 +397,5 @@ public class MainActivity extends BridgeActivity {
 
 await writeFile(javaPath, source, 'utf8');
 console.log(
-  'Applied Stillora Android splash, system-bar, media-playback permission, and notification-icon patches.',
+  'Applied Stillora Android R8, splash, system-bar, media-playback permission, and notification-icon patches.',
 );

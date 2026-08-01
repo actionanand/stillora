@@ -63,6 +63,9 @@ See [ANDROID.md](ANDROID.md) for local builds, versioning, GitHub Actions artifa
 Splash-screen, system-bar, and media-session behavior is documented in
 [ANDROID_SPECIAL_CASES.md](ANDROID_SPECIAL_CASES.md).
 
+Release shrinking, obfuscation, and Play Console mapping files are documented in
+[R8-DEOBFUSCATION.md](R8-DEOBFUSCATION.md).
+
 ## Media assets
 
 See [MEDIA_ASSETS.md](MEDIA_ASSETS.md) for audio/video libraries, licence checks, OGG conversion,
