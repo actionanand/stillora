@@ -15,7 +15,7 @@ concurrency:
 
 env:
   MIN_SDK_VERSION: 24
-  TARGET_SDK_VERSION: 35
+  TARGET_SDK_VERSION: 36
   RELEASE_BASENAME: stillora
 
 jobs:
@@ -78,6 +78,8 @@ jobs:
           sed -i 's/versionName "[^"]*"/versionName project.hasProperty("versionName") ? project.versionName : "1.0.0"/' build.gradle
           sed -i "s/minSdkVersion = .*/minSdkVersion = $MIN_SDK_VERSION/" ../variables.gradle
           sed -i "s/targetSdkVersion = .*/targetSdkVersion = $TARGET_SDK_VERSION/" ../variables.gradle
+          grep -Fq "minSdkVersion = $MIN_SDK_VERSION" ../variables.gradle
+          grep -Fq "targetSdkVersion = $TARGET_SDK_VERSION" ../variables.gradle
           echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
           echo "RELEASE_FILE=${RELEASE_BASENAME}-${VERSION_NAME//./-}" >> "$GITHUB_ENV"
@@ -104,11 +106,20 @@ jobs:
       - name: Clear previous Android release artifacts
         run: |
           mkdir -p releases
-          rm -f releases/*.apk releases/*.aab releases/*.apk.idsig
+          rm -f releases/*.apk releases/*.aab releases/*.apk.idsig releases/*-mapping.txt
 
       - name: Build unsigned release APK and AAB
         working-directory: android
         run: ./gradlew assembleRelease bundleRelease -PversionCode="$VERSION_CODE" -PversionName="$VERSION_NAME"
+
+      - name: Preserve R8 deobfuscation mapping
+        run: |
+          MAPPING_SOURCE="android/app/build/outputs/mapping/release/mapping.txt"
+          MAPPING_FILE="releases/${RELEASE_FILE}-mapping.txt"
+          test -s "$MAPPING_SOURCE"
+          cp "$MAPPING_SOURCE" "$MAPPING_FILE"
+          test -s "$MAPPING_FILE"
+          echo "MAPPING_FILE=$MAPPING_FILE" >> "$GITHUB_ENV"
 
       - name: Decode release keystore
         id: keystore
@@ -199,9 +210,11 @@ jobs:
           AAB_FILE=$(find releases -maxdepth 1 -name '*.aab' -type f | head -1)
           test -s "$APK_FILE"
           test -s "$AAB_FILE"
+          test -s "$MAPPING_FILE"
           echo "## Android artifacts" >> "$GITHUB_STEP_SUMMARY"
           echo "- APK: \`$APK_FILE\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- AAB: \`$AAB_FILE\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- R8 mapping: \`$MAPPING_FILE\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Commit release files to main-android
         if: github.ref == 'refs/heads/main-android'
@@ -220,6 +233,7 @@ jobs:
           path: |
             releases/*.apk
             releases/*.aab
+            releases/*-mapping.txt
             releases/playstore-icon.png
           if-no-files-found: error
           retention-days: 30
@@ -231,6 +245,7 @@ jobs:
           files: |
             releases/*.apk
             releases/*.aab
+            releases/*-mapping.txt
             releases/playstore-icon.png
 
       - name: Remove decoded keystore

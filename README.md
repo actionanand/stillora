@@ -6,6 +6,7 @@ Project guides:
 
 - [Android build and media controls](documentation/ANDROID.md)
 - [Android splash, system bars, and media special cases](documentation/ANDROID_SPECIAL_CASES.md)
+- [Android R8 optimization and deobfuscation mappings](documentation/R8-DEOBFUSCATION.md)
 - [Audio/video sources, licensing, and conversion](documentation/MEDIA_ASSETS.md)
 - [NgRx Signal Store state and side effects](documentation/NGRX_SIGNALS.md)
 
